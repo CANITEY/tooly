@@ -2,9 +2,13 @@ package ui
 
 import (
 	"fmt"
+	"os"
+	"tooly/internal/checks"
+
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+type rootStatus bool
 
 type model struct {
 	choices []string
@@ -29,12 +33,26 @@ func Run(m model) error {
 	return nil
 }
 
+func checkRoot() tea.Msg {
+	isRoot, _ := checks.IsRoot()
+	return rootStatus(isRoot)
+}
+
+
 func (m model) Init() tea.Cmd {
-	return nil
+	for i := 0; i < len(m.choices); i++ {
+		m.selected[i] = true
+	}
+	return checkRoot
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case rootStatus:
+		if msg {
+			fmt.Println("Run as root")
+			os.Exit(1)
+		}
 	case tea.KeyMsg :
 		switch msg.String() {
 		case "enter":
@@ -49,7 +67,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor++
 			}
 		case " ":
-			_, ok := m.selected[m.cursor]
+			ok := m.selected[m.cursor]
 			if ok {
 				m.selected[m.cursor] = false
 			} else {
@@ -75,8 +93,16 @@ func (m model) View() string {
 		if m.cursor == i {
 			cursor = ">"
 		}
-		s += fmt.Sprintf("%s %s\n",cursor, toolName)
+
+		selected := " "
+		if m.selected[i] {
+			selected = "x"
+		}
+		s += fmt.Sprintf("%s [%s] %s\n",cursor, selected, toolName)
 	}
+
+	s += fmt.Sprint("\n\nPress space to check tool\n")
+	s += fmt.Sprint("Press q, or ctrl+c to stop the script any time")
 
 	return s
 }
