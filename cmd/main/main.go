@@ -6,7 +6,7 @@ import (
 
 
 
-
+// TODO: Create the debian routine first
 func main() {
 	toolist := []string{
 		"subfinder",
